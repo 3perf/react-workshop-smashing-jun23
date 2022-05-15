@@ -1,0 +1,11 @@
+.note-view {
+  padding: 18.5px 14px;
+}
+
+.note-view h2 {
+  margin-top: 0;
+}
+
+.note-view__markdown-block {
+  opacity: 0.5;
+}
