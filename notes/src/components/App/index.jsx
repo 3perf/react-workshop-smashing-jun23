@@ -1,7 +1,7 @@
 import { formatISO } from "date-fns";
 import Jabber from "jabber";
 import { nanoid } from "nanoid";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { deleteNotes, getNotes, putNote } from "../../utils/storage";
 import { updateLastActiveDate } from "../../store/redux/userReducer";
@@ -15,8 +15,39 @@ import fakeApi from "../../utils/fakeApi";
 
 const jabber = new Jabber();
 
+function useWhyDidYouUpdate(name, props) {
+  // Get a mutable ref object where we can store props ...
+  // ... for comparison next time this hook runs.
+  const previousProps = useRef();
+  useEffect(() => {
+    if (previousProps.current) {
+      // Get all keys from previous and current props
+      const allKeys = Object.keys({ ...previousProps.current, ...props });
+      // Use this object to keep track of changed props
+      const changesObj = {};
+      // Iterate through keys
+      allKeys.forEach((key) => {
+        // If previous is different from current
+        if (previousProps.current[key] !== props[key]) {
+          // Add to changesObj
+          changesObj[key] = {
+            from: previousProps.current[key],
+            to: props[key],
+          };
+        }
+      });
+      // If changesObj not empty then output to console
+      if (Object.keys(changesObj).length) {
+        console.log("[why-did-you-update]", name, changesObj);
+      }
+    }
+    // Finally update previousProps with current props for next hook call
+    previousProps.current = props;
+  });
+}
+
 function App({ mobxStore }) {
-  const [notes, setNotes] = useState(getNotes());
+  const [notes, setNotes] = useState(getNotes()); // ← stores all notes and changes for good
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [isPro, setIsPro] = useState(null);
   useEffect(() => {
@@ -24,6 +55,8 @@ function App({ mobxStore }) {
   }, []);
 
   const dispatch = useDispatch();
+
+  useWhyDidYouUpdate("App", { notes });
 
   const saveNote = (id, { text, date }) => {
     putNote(id, { text, date });
@@ -91,36 +124,34 @@ function App({ mobxStore }) {
   };
 
   return (
-    <DarkModeProvider>
-      <div className="notes">
-        <div className="notes__columns">
-          <div className="notes__column notes__column_list">
-            <h1>NoteList{isPro && " Pro"}</h1>
-            <div className="notes__column-content">
-              <NotesList
-                notes={notes}
-                activeNoteId={activeNoteId}
-                onNoteActivated={setActiveNoteId}
-                onNewNotesRequested={createNewNotes}
-                onDeleteAllRequested={deleteAllNotes}
-              />
-            </div>
-          </div>
-          <div className="notes__column notes__column_primary">
-            <div className="notes__column-content">
-              <PrimaryPane
-                activeNoteId={activeNoteId}
-                notes={notes}
-                saveNote={saveNote}
-              />
-            </div>
+    <div className="notes">
+      <div className="notes__columns">
+        <div className="notes__column notes__column_list">
+          <h1>NoteList{isPro && " Pro"}</h1>
+          <div className="notes__column-content">
+            <NotesList
+              notes={notes}
+              activeNoteId={activeNoteId}
+              onNoteActivated={setActiveNoteId}
+              onNewNotesRequested={createNewNotes}
+              onDeleteAllRequested={deleteAllNotes}
+            />
           </div>
         </div>
-        <div className="notes__status-bar">
-          <StatusBar store={mobxStore.statusBar} />
+        <div className="notes__column notes__column_primary">
+          <div className="notes__column-content">
+            <PrimaryPane
+              activeNoteId={activeNoteId}
+              notes={notes}
+              saveNote={saveNote}
+            />
+          </div>
         </div>
       </div>
-    </DarkModeProvider>
+      <div className="notes__status-bar">
+        <StatusBar store={mobxStore.statusBar} />
+      </div>
+    </div>
   );
 }
 

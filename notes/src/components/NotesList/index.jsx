@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Button, ButtonGroup } from "@mui/material";
 import FilterInput from "../FilterInput";
 import NoteButton from "../NoteButton";
@@ -33,16 +33,24 @@ function NotesList({
 
             return text.toLowerCase().includes(filter.toLowerCase());
           })
-          .map(({ id, text, date }) => (
-            <NoteButton
-              key={id}
-              isActive={activeNoteId === id}
-              onNoteActivated={() => onNoteActivated(id)}
-              text={text}
-              filterText={filter}
-              date={date}
-            />
-          ))}
+          .map(({ id, text, date }) => {
+            // const onNoteActivatedCb = useCallback(
+            //   () => onNoteActivated(id),
+            //   [onNoteActivated, id]
+            // );
+            return (
+              <NoteButton
+                key={id}
+                isActive={activeNoteId === id}
+                // onNoteActivated={() => onNoteActivated(id)}
+                onNoteActivated={onNoteActivated}
+                id={id}
+                text={text}
+                filterText={filter}
+                date={date}
+              />
+            );
+          })}
       </div>
 
       <div className="notes-list__controls">
@@ -80,3 +88,9 @@ function NotesList({
 }
 
 export default NotesList;
+
+// → props changed
+// → hooks changed
+// → context changed
+// → state changed (in class components)
+// → parent component rerendered (none of the changes ↑ happened)

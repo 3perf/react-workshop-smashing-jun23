@@ -1,12 +1,19 @@
 import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import Brightness2Icon from "@mui/icons-material/Brightness2";
-import { useContext } from "react";
+import { memo } from "react";
 import { DarkModeContext } from "../DarkModeContext";
 import "./index.css";
+import { useContextSelector } from "use-context-selector";
 
 function DarkModeSwitcher() {
-  const { mode, setMode } = useContext(DarkModeContext);
+  const mode = useContextSelector(DarkModeContext, (context) => context.mode);
+  const setMode = useContextSelector(
+    DarkModeContext,
+    (context) => context.setMode
+  );
+
+  // “Let’s use useContextSelector from now on!”
 
   return (
     <div className="theme-switcher">
@@ -28,4 +35,4 @@ function DarkModeSwitcher() {
   );
 }
 
-export default DarkModeSwitcher;
+export default memo(DarkModeSwitcher);

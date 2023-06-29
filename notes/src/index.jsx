@@ -10,6 +10,7 @@ import reduxStore from "./store/redux";
 import mobxStore from "./store/mobx";
 import "./index.css";
 import { createTheme, ThemeProvider } from "@mui/material";
+import { DarkModeProvider } from "./components/DarkModeContext";
 
 const theme = createTheme({
   typography: {
@@ -54,7 +55,9 @@ const element = (
                 disabled.
               </div>
             )}
-            <App mobxStore={mobxStore} />
+            <DarkModeProvider>
+              <App mobxStore={mobxStore} />
+            </DarkModeProvider>
           </ThemeProvider>
         )}
       </MobxReact.Observer>
