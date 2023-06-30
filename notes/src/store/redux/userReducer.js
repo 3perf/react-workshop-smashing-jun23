@@ -1,4 +1,5 @@
 import { createAction } from "@reduxjs/toolkit";
+import  { produce } from "immer";
 
 export const updateLastActiveDate = createAction(
   "notes/updateLastActiveDate",
@@ -11,20 +12,30 @@ export const updateLastActiveDate = createAction(
   }
 );
 
+// 2) this function gets called
+// 3) recreates the users array from scratch
 const userReducer = (userData = [], action) => {
   if (action.type === updateLastActiveDate.toString()) {
-    const [currentUser, ...otherUsers] = userData;
+    return produce(userData, (userData) => {
+      console.log("patching userData");
+      userData[0].lastActiveDate = action.payload.dateString;
+    });
 
-    return [
-      {
-        ...currentUser,
-        lastActiveDate: action.payload.dateString,
-      },
-      ...otherUsers,
-    ];
+    //
+
+    // if (action.payload.dateString !== currentUser.lastActiveDate) {
+    //   const [currentUser, ...otherUsers] = userData;
+    //   return [
+    //     {
+    //       ...currentUser,
+    //       lastActiveDate: action.payload.dateString,
+    //     },
+    //     ...otherUsers,
+    //   ];
+    // }
   }
 
   return userData;
-};
+}; // => state.users
 
 export default userReducer;

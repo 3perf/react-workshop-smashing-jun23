@@ -77,3 +77,10 @@ function generateNoteHeader(text, filterText) {
 }
 
 export default memo(NoteButton);
+
+// 2) → not rerendering NoteButtons unless the filter text matches the header
+// 4) → paginate
+
+// 3) → virtualization
+// 1) → throttling
+// 5) → useTransition

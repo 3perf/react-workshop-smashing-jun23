@@ -30,15 +30,15 @@ function App({ mobxStore }) {
 
   const dispatch = useDispatch();
 
+  // 1) I’m typing into the editor
   const saveNote = (id, { text, date }) => {
     putNote(id, { text, date });
 
     const newNotes = getNotes();
     setNotes(newNotes);
 
-    dispatch(
-      updateLastActiveDate(formatISO(new Date(), { representation: "date" }))
-    );
+    const currentDate = formatISO(new Date(), { representation: "date" });
+    dispatch(updateLastActiveDate(currentDate));
   };
 
   const createNewNotes = ({ count, paragraphs }) => {
