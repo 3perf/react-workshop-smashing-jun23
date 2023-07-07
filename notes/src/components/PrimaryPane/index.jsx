@@ -1,3 +1,4 @@
+import { unstable_batchedUpdates } from "react-dom";
 import { Button } from "@mui/material";
 import { useState } from "react";
 import fakeApi from "../../utils/fakeApi";
@@ -7,26 +8,64 @@ import DarkModeSwitcher from "../DarkModeSwitcher";
 import ActiveAuthors from "../ActiveAuthors";
 import spinner from "./spinner.svg";
 import "./index.css";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  publishNote,
+  unpublishNote,
+} from "../../store/redux/noteMetadataReducer";
 
 function PrimaryPane({ activeNoteId, notes, saveNote }) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isPublic, setIsPublic] = useState(false);
-  const [publishedAt, setPublishedAt] = useState(null);
+  // const [isLoading, setIsLoading] = useState(false); // → 1
+  // const [isPublic, setIsPublic] = useState(false); // → 2
+  // const [publishedAt, setPublishedAt] = useState(null); // → 3
+
+  const isLoading = useSelector((state) => state.noteMetadata.isUpdating);
+  const isPublic = useSelector(
+    (state) => state.noteMetadata.publicity[activeNoteId]
+  );
+  const publishedAt = useSelector(
+    (state) => state.noteMetadata.publishedDate[activeNoteId]
+  );
+  const dispatch = useDispatch();
 
   const togglePublic = async () => {
-    setIsLoading(true);
-    setIsPublic((isPublic) => !isPublic);
-
     if (isPublic) {
-      await fakeApi.setPublicStatus(false);
+      dispatch(unpublishNote(activeNoteId));
     } else {
-      await fakeApi.setPublicStatus(true);
-      const publishedDate = await fakeApi.getPublishedDate();
-      setPublishedAt(publishedDate.toLocaleTimeString());
+      dispatch(publishNote(activeNoteId));
     }
-
-    setIsLoading(false);
   };
+
+  // render 1: hooks 1 and hooks 2 update
+  // render 2: hook 3 updates
+  // render 3: hook 1 updates
+
+  // ↓
+
+  // render 1: hooks 1 and hooks 2 update
+  // render 2: hook 1 and hook 3 updates
+
+  // const togglePublic = async () => {
+  // setIsLoading(true);
+  // setIsPublic((isPublic) => !isPublic);
+  // // isPublic → false
+  // if (isPublic) {
+  //   await fakeApi.setPublicStatus(false);
+  //   setIsLoading(false);
+  // } else {
+  //   await fakeApi.setPublicStatus(true);
+  //   const publishedDate = await fakeApi.getPublishedDate();
+  //   // unstable_batchedUpdates(() => {
+  //   setPublishedAt(publishedDate.toLocaleTimeString());
+  //   // });
+  // }
+  // setIsLoading(false);
+  // };
+
+  // Solutions:
+  // 1. reducer → call dispatch() instead of two setState() hooks
+  // 2. unstable_batchedUpdates()
+  // 3. Update to React 18
 
   if (!activeNoteId) {
     return (
@@ -83,5 +122,109 @@ function PrimaryPane({ activeNoteId, notes, saveNote }) {
     </div>
   );
 }
+
+PrimaryPane.whyDidYouRender = {
+  logOnDifferentValues: true,
+};
+
+/*
+
+myReact:
+setState = (newState) => {
+  updateUi({ newState });
+}
+
+*/
+
+/*
+
+React 17:
+
+const updateQueue = [];
+let shouldBatchUpdates = false;
+
+setState = (newState) => {
+  updateQueue.push(newState);
+  if (!shouldBatchUpdates) processUpdateQueue();
+}
+
+onClick = (cb) => {
+  unstable_batchedUpdates(() => cb())
+}
+
+unstable_batchedUpdates = (cb) => {
+  shouldBatchUpdates = true;
+  cb();
+  shouldBatchUpdates = false;
+  processUpdateQueue();
+}
+
+unstable_batchedUpdates = cb => cb() // React 18
+
+useCallback = (cb) => {
+  // DOES NOT FLIP shouldBatchUpdates
+}
+
+cb = () => {
+  setIsLoading(true);
+  setIsPublic((isPublic) => !isPublic);
+
+  doSomeApi((err, result) => {
+
+  });
+}
+
+cb = () => {
+    setIsLoading(true);
+    setIsPublic((isPublic) => !isPublic);
+
+    // isPublic → false
+    // if (false) {
+    // await fakeApi.setPublicStatus(false);
+    // } else {
+
+    fakeApi.setPublicStatus(true).then(() => {
+      return fakeApi.getPublishedDate();
+    }).then((publishedDate) => {
+      setPublishedAt(publishedDate.toLocaleTimeString());
+      setIsLoading(false);
+    });
+
+
+    // }
+
+  };
+
+*/
+
+/*
+
+React 18:
+
+const updateQueue = [];
+
+setState = (newState) => {
+  updateQueue.push(newState);
+  scheduleProcessUpdateQueue();
+}
+
+let hasScheduledUpdate = false;
+scheduleProcessUpdateQueue = () => {
+  if (hasScheduledUpdate) return;
+  hasScheduledUpdate = true;
+
+  setTimeout(() => { processUpdateQueue() }, 0);
+  // → not only setTimeout; https://3perf.com/talks/react-concurrency/#slide-23
+  // → schedules a new task (https://jakearchibald.com/2015/tasks-microtasks-queues-and-schedules/)
+}
+
+// setState(1)
+// setState(2)
+// setState(3)
+// → updateQueue = [1, 2, 3]
+
+// once all JS exection is over → the browser calls processUpdateQueue()
+
+*/
 
 export default PrimaryPane;

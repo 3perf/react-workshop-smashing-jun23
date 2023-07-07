@@ -1,5 +1,5 @@
 // Uncomment to enable why-did-you-render in notes:
-// import "./wdyr";
+import "./wdyr";
 import React from "react";
 import ReactDOM from "react-dom";
 import ReactDOMClient from "react-dom/client";
